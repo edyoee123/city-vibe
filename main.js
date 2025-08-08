@@ -1,6 +1,5 @@
 let player;
 let npc;
-let cursors;
 let talkText;
 let inBattle = false;
 let inventory = [];
@@ -15,15 +14,9 @@ const config = {
     pixelArt: true,
     physics: {
         default: 'arcade',
-        arcade: {
-            debug: false
-        }
+        arcade: { debug: false }
     },
-    scene: {
-        preload: preload,
-        create: create,
-        update: update
-    }
+    scene: { preload, create, update }
 };
 
 const game = new Phaser.Game(config);
@@ -38,7 +31,7 @@ function preload() {
 function create() {
     const map = this.make.tilemap({ key: 'map' });
     const tileset = map.addTilesetImage('citytiles', 'tiles');
-    const belowLayer = map.createLayer('Below Player', tileset, 0, 0);
+    map.createLayer('Below Player', tileset, 0, 0);
 
     // Player setup
     player = this.physics.add.sprite(50, 50, 'player', 0);
@@ -53,16 +46,14 @@ function create() {
         font: '8px Arial',
         fill: '#ffffff',
         backgroundColor: '#000000'
-    });
-    talkText.setScrollFactor(0).setDepth(1);
+    }).setScrollFactor(0).setDepth(1);
 
     // Inventory UI
     inventoryText = this.add.text(10, 10, 'Inventory: (empty)', {
         font: '8px Arial',
         fill: '#ffffff',
         backgroundColor: '#000000'
-    });
-    inventoryText.setScrollFactor(0).setDepth(1);
+    }).setScrollFactor(0).setDepth(1);
 
     // Player animations
     this.anims.create({
@@ -72,8 +63,17 @@ function create() {
         repeat: -1
     });
 
-    // Input
-    cursors = this.input.keyboard.createCursorKeys();
+    // Keys: WASD + Arrows
+    this.keys = this.input.keyboard.addKeys({
+        up: Phaser.Input.Keyboard.KeyCodes.W,
+        left: Phaser.Input.Keyboard.KeyCodes.A,
+        down: Phaser.Input.Keyboard.KeyCodes.S,
+        right: Phaser.Input.Keyboard.KeyCodes.D,
+        attack: Phaser.Input.Keyboard.KeyCodes.LEFT,
+        arrowUp: Phaser.Input.Keyboard.KeyCodes.UP,
+        arrowDown: Phaser.Input.Keyboard.KeyCodes.DOWN,
+        arrowRight: Phaser.Input.Keyboard.KeyCodes.RIGHT
+    });
 
     // Overlap detection for NPC
     this.physics.add.overlap(player, npc, startTalk, null, this);
@@ -82,22 +82,21 @@ function create() {
 function update() {
     if (inBattle) return;
 
-    // Reset velocity
     player.setVelocity(0);
 
-    // Normal movement (no inverted controls)
-    if (cursors.left.isDown) {
+    // WASD movement
+    if (this.keys.left.isDown) {
         player.setVelocityX(-60);
-        player.setFlipX(true); // face left
+        player.setFlipX(true);
         player.anims.play('walk', true);
-    } else if (cursors.right.isDown) {
+    } else if (this.keys.right.isDown) {
         player.setVelocityX(60);
-        player.setFlipX(false); // face right
+        player.setFlipX(false);
         player.anims.play('walk', true);
-    } else if (cursors.up.isDown) {
+    } else if (this.keys.up.isDown) {
         player.setVelocityY(-60);
         player.anims.play('walk', true);
-    } else if (cursors.down.isDown) {
+    } else if (this.keys.down.isDown) {
         player.setVelocityY(60);
         player.anims.play('walk', true);
     } else {
@@ -117,15 +116,26 @@ function update() {
         talkText.setText('');
     }
 
-    // Trigger battle when SPACE is pressed
-    if (talkText.text !== '' && Phaser.Input.Keyboard.JustDown(cursors.space)) {
+    // Attack with Left Arrow
+    if (talkText.text !== '' && Phaser.Input.Keyboard.JustDown(this.keys.attack)) {
         startBattle();
+    }
+
+    // Reserved keys for future features
+    if (Phaser.Input.Keyboard.JustDown(this.keys.arrowUp)) {
+        console.log("Arrow Up pressed - future feature");
+    }
+    if (Phaser.Input.Keyboard.JustDown(this.keys.arrowDown)) {
+        console.log("Arrow Down pressed - future feature");
+    }
+    if (Phaser.Input.Keyboard.JustDown(this.keys.arrowRight)) {
+        console.log("Arrow Right pressed - future feature");
     }
 }
 
 function startTalk() {
     if (!inBattle) {
-        talkText.setText('NPC: Welcome to City Vibe! Press SPACE to battle.');
+        talkText.setText('NPC: Welcome to City Vibe! Press ← to battle.');
     }
 }
 
@@ -133,7 +143,7 @@ function startBattle() {
     inBattle = true;
     talkText.setText('Battle started! You win! (Demo)');
 
-    // Give random loot
+    // Random loot
     let loot = lootTable[Math.floor(Math.random() * lootTable.length)];
     inventory.push(loot);
     inventoryText.setText('Inventory: ' + inventory.join(', '));
@@ -141,7 +151,7 @@ function startBattle() {
     // Remove NPC temporarily
     npc.disableBody(true, true);
 
-    // Respawn NPC after 5 seconds
+    // Respawn after 5 seconds
     setTimeout(() => {
         inBattle = false;
         talkText.setText('');
