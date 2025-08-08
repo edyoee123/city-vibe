@@ -30,8 +30,11 @@ function create() {
     const worldLayer = map.createLayer('World', tileset, 0, 0);
     worldLayer.setCollisionByProperty({ collides: true });
 
-    player = this.physics.add.sprite(50, 50, 'player', 0);
-    npc = this.physics.add.sprite(100, 100, 'npc', 0);
+    // Spawn player sa gitna ng mapa
+    player = this.physics.add.sprite(map.widthInPixels / 2, map.heightInPixels / 2, 'player', 0);
+
+    // Spawn NPC malapit sa player
+    npc = this.physics.add.sprite(player.x + 32, player.y, 'npc', 0);
 
     this.physics.add.collider(player, worldLayer);
     this.physics.add.overlap(player, npc, startTalk, null, this);
@@ -48,6 +51,11 @@ function create() {
         frameRate: 8,
         repeat: -1
     });
+
+    // CAMERA FOLLOW player
+    this.cameras.main.startFollow(player);
+    this.cameras.main.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
+    this.cameras.main.setBackgroundColor('#228B22'); // fallback background color
 }
 
 function update() {
@@ -70,13 +78,15 @@ function update() {
     } else {
         player.anims.stop();
     }
+
+    // SPACE key check kapag may dialogue
+    if (talkText.text !== '' && Phaser.Input.Keyboard.JustDown(cursors.space)) {
+        startBattle();
+    }
 }
 
 function startTalk() {
     talkText.setText('NPC: Welcome to City Vibe! Press SPACE to battle.');
-    if (Phaser.Input.Keyboard.JustDown(cursors.space)) {
-        startBattle();
-    }
 }
 
 function startBattle() {
