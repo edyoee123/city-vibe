@@ -1,0 +1,1 @@
+console.log('City Vibe script loaded');
